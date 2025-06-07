@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Recommender</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            position: relative;
+            background: #fff;
+            padding: 2.5rem 2rem;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(44, 62, 80, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+        h1 {
+            color: #4f3ca7;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        form {
+            margin-bottom: 1.5rem;
+        }
+        input[type="text"] {
+            padding: 0.7rem;
+            width: 80%;
+            border: 1px solid #bdbdbd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus {
+            border: 1.5px solid #764ba2;
+        }
+        input[type="submit"] {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        input[type="submit"]:hover {
+            background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #f3f0fa;
+            margin: 0.5rem 0;
+            padding: 0.7rem;
+            border-radius: 7px;
+            color: #333;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(118, 75, 162, 0.07);
+            transition: background 0.2s;
+        }
+        li:hover {
+            background: #e0d7f7;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    <div class="container">
+        <h1>Movie Recommender</h1>
+        <form method="POST">
+            <input type="text" name="movie" placeholder="Enter a movie title" autocomplete="off" required>
+            <br>
+            <input type="submit" value="Recommend">
+        </form>
+
+        {% if movie_title %}
+            <h2>Recommendations for "{{ movie_title }}":</h2>
+            <ul>
+            {% for movie in recommendations %}
+                <li>{{ movie }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+<script>
+const input = document.querySelector('input[name="movie"]');
+const container = document.querySelector('.container');
+let suggestionBox;
+
+input.addEventListener('input', function() {
+    const query = this.value;
+    if (query.length < 1) {
+        if (suggestionBox) suggestionBox.remove();
+        return;
+    }
+    fetch(`/autocomplete?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (suggestionBox) suggestionBox.remove();
+            suggestionBox = document.createElement('div');
+            suggestionBox.style.position = 'absolute';
+            suggestionBox.style.background = '#fff';
+            suggestionBox.style.border = '1px solid #ccc';
+            suggestionBox.style.width = input.offsetWidth + 'px';
+            suggestionBox.style.left = input.getBoundingClientRect().left - container.getBoundingClientRect().left + 'px';
+            suggestionBox.style.top = (input.getBoundingClientRect().bottom - container.getBoundingClientRect().top) + 'px';
+            suggestionBox.style.zIndex = 1000;
+            suggestionBox.style.maxHeight = '180px';
+            suggestionBox.style.overflowY = 'auto';
+            suggestionBox.style.borderRadius = '8px';
+            suggestionBox.style.boxShadow = '0 2px 8px rgba(44,62,80,0.15)';
+            data.forEach(title => {
+                const item = document.createElement('div');
+                item.textContent = title;
+                item.style.padding = '8px';
+                item.style.cursor = 'pointer';
+                item.addEventListener('mousedown', function(e) {
+                    input.value = title;
+                    suggestionBox.remove();
+                });
+                suggestionBox.appendChild(item);
+            });
+            container.appendChild(suggestionBox);
+        });
+});
+
+document.addEventListener('click', function(e) {
+    if (suggestionBox && !suggestionBox.contains(e.target) && e.target !== input) {
+        suggestionBox.remove();
+    }
+});
+</script>
+</body>
+</html>
